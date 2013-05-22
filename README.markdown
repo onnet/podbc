@@ -25,7 +25,8 @@ ok
 **Adding a pool programmatically:**
 
 ```erl-sh
-2> podbc_mgr:add_pool('odbc/test', [{size, 5}, {max_overflow, 5}], [{dsn, "DSN=test"}, {options, [{auto_commit, off}, {binary_strings, on}]}]).
+2> podbc_mgr:add_pool('odbc/test', [{size, 5}, {max_overflow, 5}],
+        [{dsn, "DSN=test"}, {options, [{auto_commit, off}, {binary_strings, on}]}]).
 {ok,<0.68.0>}
 ```
 
@@ -63,7 +64,8 @@ $ erl -pa ebin -pa deps/*/ebin -config sample.config -s podbc start
       {mysql, [
         {last_insert_id, "SELECT CONVERT(LAST_INSERT_ID, UNSIGNED)", []},
         {'person.all', "SELECT id, last_name, first_name FROM person", []},
-        {'person.insert', "INSERT INTO person (last_name, first_name) VALUES (?, ?)", [{sql_varchar, 64}, {sql_varchar, 64}]}
+        {'person.insert', "INSERT INTO person (last_name, first_name) VALUES (?, ?)", [
+            {sql_varchar, 64}, {sql_varchar, 64}]}
       ]}
     ]}
   ]}
@@ -95,7 +97,8 @@ then safely return the connection to the pool.
 Inside the fun, we use the *named_query/3* function. See the example configuration file above for the sql.
 
 ```erl-sh
-6> podbc:do('odbc/test', fun(WorkerRef) -> {selected, _, Result} = podbc:named_query(WorkerRef, 'person.all', []), Result end).
+6> podbc:do('odbc/test', fun(WorkerRef) ->
+        {selected, _, Result} = podbc:named_query(WorkerRef, 'person.all', []), Result end).
 {ok,[{4,<<"Dampf">>,<<"Hans">>},
      {5,<<"Mustermann">>,<<"Erika">>}]}
 ```
