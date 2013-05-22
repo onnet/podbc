@@ -7,7 +7,7 @@ around the functions found in Erlang's odbc module, there are functions to reduc
 easier, when you use ODBC with Erlang. The project was formerly known as [poolboy_odbc](https://github.com/pannonia-technologies/poolboy_odbc).
 The rename was made mainly to reduce typing.
 
-Contributions are always very welcome! See [here](#Contributors) who contributed in the past.
+Contributions are always very welcome! See [here](#contributors) who contributed in the past.
 
 Usage:
 ------
