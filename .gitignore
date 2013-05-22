@@ -1,0 +1,6 @@
+.eunit
+.idea
+ebin
+deps
+erl_crash.dump
+*.iml
