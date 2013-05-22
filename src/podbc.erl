@@ -58,14 +58,14 @@ do(Pool, Fun, Block) ->
 
 do(Pool, Fun, Block, TimeOut) ->
   case connect(Pool, Block, TimeOut) of
-    full ->
-      full;
-    WorkerRef ->
+    {ok, WorkerRef} ->
       try
         {ok, Fun(WorkerRef)}
       after
         ok = disconnect(Pool, WorkerRef)
-      end
+      end;
+    Other ->
+      Other
   end.
 
 get_pool_name(WorkerRef) ->
@@ -118,7 +118,12 @@ connect(Pool, Block) ->
   connect(Pool, Block, ?TIMEOUT).
 
 connect(Pool, Block, TimeOut) ->
-  poolboy:checkout(Pool, Block, TimeOut).
+  case poolboy:checkout(Pool, Block, TimeOut) of
+    full ->
+      {error, full};
+    WorkerRef when is_pid(WorkerRef) ->
+      {ok, WorkerRef}
+  end.
 
 disconnect(Pool, Worker) ->
   poolboy:checkin(Pool, Worker).
