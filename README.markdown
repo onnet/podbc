@@ -108,10 +108,10 @@ Example with inserting data:
 ```erl-sh
 7> podbc:do('odbc/nestor', fun(Worker) ->
         {updated, 1} = podbc:named_query(Worker, 'person.insert', [<<"John">>, <<"Doe">>]),
-        {selected, _, [Id]} = podbc:named_query(Worker, last_insert_id, []),
+        {selected, _, [{Id}]} = podbc:named_query(Worker, last_insert_id, []),
         Id
    end).
-{ok,{<<"13">>}}
+{ok,13}
 ```
 
 Road Map:
