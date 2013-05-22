@@ -92,17 +92,6 @@ named_query(WorkerRef, QueryName, Params, TimeOut) ->
       end
   end.
 
-merge_params([], [], Acc) ->
-  lists:reverse(Acc);
-merge_params([ParamType | RestParamTypes], [Param | RestParams], Acc) ->
-  FixedParams = fix_params_types(ParamType, [Param]),
-  merge_params(RestParamTypes, RestParams, [FixedParams | Acc]).
-
-fix_params_types({Type, Direction}, Params) when Direction =:= in; Direction =:= out; Direction =:= in_or_out ->
-  {Type, Direction, Params};
-fix_params_types(Type, Params) ->
-  {Type, Params}.
-
 %% odbc API
 
 commit(WorkerRef, CommitMode) ->
@@ -203,3 +192,14 @@ ensure_started(App) ->
     {error, {already_started, App}} ->
       ok
   end.
+
+merge_params([], [], Acc) ->
+  lists:reverse(Acc);
+merge_params([ParamType | RestParamTypes], [Param | RestParams], Acc) ->
+  FixedParams = fix_params_types(ParamType, [Param]),
+  merge_params(RestParamTypes, RestParams, [FixedParams | Acc]).
+
+fix_params_types({Type, Direction}, Params) when Direction =:= in; Direction =:= out; Direction =:= in_or_out ->
+  {Type, Direction, Params};
+fix_params_types(Type, Params) ->
+  {Type, Params}.
