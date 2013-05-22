@@ -28,6 +28,7 @@
 %% podbc API
 
 -export([do/2, do/3, do/4]).
+-export([transaction/2, transaction/3]).
 -export([get_pool_name/1]).
 -export([named_query/3, named_query/4]).
 
@@ -66,6 +67,25 @@ do(Pool, Fun, Block, TimeOut) ->
       end;
     Other ->
       Other
+  end.
+
+transaction(WorkerRef, Fun) ->
+  transaction(WorkerRef, Fun, ?TIMEOUT).
+
+transaction(WorkerRef, Fun, TimeOut) ->
+  case Fun(WorkerRef) of
+    commit ->
+      commit(WorkerRef, commit, TimeOut),
+      ok;
+    rollback ->
+      commit(WorkerRef, rollback, TimeOut),
+      ok;
+    {commit, Result} ->
+      commit(WorkerRef, commit, TimeOut),
+      {ok, Result};
+    {rollback, Result} ->
+      commit(WorkerRef, rollback, TimeOut),
+      {ok, Result}
   end.
 
 get_pool_name(WorkerRef) ->
