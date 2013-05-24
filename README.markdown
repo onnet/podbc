@@ -62,7 +62,7 @@ $ erl -pa ebin -pa deps/*/ebin -config sample.config -s podbc start
     ]},
     {named_queries, [
       {mysql, [
-        {last_insert_id, "SELECT CONVERT(LAST_INSERT_ID, UNSIGNED)", []},
+        {last_insert_id, "SELECT CONVERT(LAST_INSERT_ID(), UNSIGNED)", []},
         {'person.all', "SELECT id, last_name, first_name FROM person", []},
         {'person.insert', "INSERT INTO person (last_name, first_name) VALUES (?, ?)", [
             {sql_varchar, 64}, {sql_varchar, 64}]}
