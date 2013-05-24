@@ -84,6 +84,7 @@ process_not_owner_of_odbc_connection | common_reason().
 -export([commit/2, commit/3]).
 -export([connect/1, connect/2, connect/3]).
 -export([disconnect/1, disconnect/2]).
+-deprecated([{disconnect, 2, next_major_release}]).
 -export([describe_table/2, describe_table/3]).
 -export([first/1, first/2]).
 -export([last/1, last/2]).
@@ -199,6 +200,7 @@ connect(Pool, Block, TimeOut) ->
 disconnect({Pool, WorkerPid} = _WorkerRef) ->
   poolboy:checkin(Pool, WorkerPid).
 
+%% deprecated. use disconnect/1
 -spec disconnect(Pool :: atom(), Worker :: worker_ref()) -> ok.
 disconnect(_Pool, Worker) ->
   disconnect(Worker).
