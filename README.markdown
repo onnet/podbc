@@ -84,8 +84,11 @@ connect and disconnect work a little different.
 
 **Disconnecting:**
 
+The API for disconneting changed. You only need to pass the WorkerRef, no need for two arguments. disconnect/2 is still
+there for backwards compability, but will be removed sometime in the future.
+
 ```erl-sh
-5> podbc:disconnect('odbc/test', WorkerRef).
+5> podbc:disconnect(WorkerRef).
 ok
 ```
 
