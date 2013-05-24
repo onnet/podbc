@@ -25,6 +25,51 @@
 
 -define(TIMEOUT, 5000).
 
+-type col_name() :: string().
+
+-type col_names() :: [col_name()].
+
+-type commit_mode() :: commit | rollback.
+
+-type commit_reason() :: not_an_explicit_commit_connection | process_not_owner_of_odbc_connection | common_reason().
+
+-type common_reason() :: connection_closed | term().
+
+-type in_or_out() :: in | out | inout.
+
+-type odbc_data_type() :: sql_integer | sql_smallint | sql_tinyint |
+{sql_decimal, precision(), scale()} |
+{sql_numeric, precision(), scale()} |
+{sql_char, size()} | {sql_wchar, size()} | {sql_varchar, size()} | {sql_wvarchar, size()} | {sql_wlongvarchar, size()} |
+{sql_float, precision()} | sql_real | sql_double | sql_bit | atom().
+
+-type n_rows() :: non_neg_integer().
+
+-type params() :: [{odbc_data_type(), [value()]} | {odbc_data_type(), in_or_out(), [value()]}].
+
+-type position() :: next | {relative, integer()} | {absolute, integer()}.
+
+-type precision() :: non_neg_integer().
+
+-type result_reason() :: result_set_does_not_exist | process_not_owner_of_odbc_connection | common_reason().
+
+-type result_tuple() :: {updated, n_rows()} | {selected, col_names(), rows()}.
+
+-type row() :: {value()}.
+
+-type rows() :: [row()].
+
+-type scale() :: non_neg_integer().
+
+-type scroll_reason() :: result_set_does_not_exist | driver_does_not_support_function | scrollable_cursors_disabled |
+process_not_owner_of_odbc_connection | common_reason().
+
+-type size() :: pos_integer().
+
+-type value() :: null | term().
+
+-type do_fun(T) :: fun((Worker :: pid()) -> T).
+
 %% podbc API
 
 -export([do/2, do/3, do/4]).
@@ -51,12 +96,15 @@
 
 %% podbc API
 
+-spec do(Pool :: atom(), Fun :: do_fun(T)) -> {ok, T}.
 do(Pool, Fun) ->
   do(Pool, Fun, true).
 
+-spec do(Pool :: atom(), Fun :: do_fun(T), Block :: boolean()) -> {ok, T} | full.
 do(Pool, Fun, Block) ->
   do(Pool, Fun, Block, ?TIMEOUT).
 
+-spec do(Pool :: atom(), Fun :: do_fun(T), Block :: boolean(), TimeOut :: timeout()) -> {ok, T} | full.
 do(Pool, Fun, Block, TimeOut) ->
   case connect(Pool, Block, TimeOut) of
     {ok, WorkerRef} ->
@@ -69,9 +117,11 @@ do(Pool, Fun, Block, TimeOut) ->
       Other
   end.
 
+%% This is still experimental and may change
 transaction(WorkerRef, Fun) ->
   transaction(WorkerRef, Fun, ?TIMEOUT).
 
+%% This is still experimental and may change
 transaction(WorkerRef, Fun, TimeOut) ->
   case Fun(WorkerRef) of
     commit ->
@@ -88,12 +138,15 @@ transaction(WorkerRef, Fun, TimeOut) ->
       {ok, Result}
   end.
 
+-spec get_pool_name(WorkerRef :: pid()) -> {ok, Name :: atom()}.
 get_pool_name(WorkerRef) ->
   gen_server:call(WorkerRef, get_pool_name).
 
+-spec named_query(WorkerRef :: pid(), QueryName :: atom(), Params :: [any()]) -> result_tuple() | [result_tuple()] | {error, common_reason()}.
 named_query(WorkerRef, QueryName, Params) ->
   named_query(WorkerRef, QueryName, Params, ?TIMEOUT).
 
+-spec named_query(WorkerRef :: pid(), QueryName :: atom(), Params :: [any()], TimeOut :: timeout()) -> result_tuple() | [result_tuple()] | {error, common_reason()}.
 named_query(WorkerRef, QueryName, Params, TimeOut) ->
   {ok, PoolName} = get_pool_name(WorkerRef),
   {ok, {Sql, ParamTypes}} = podbc_qresolver:get(PoolName, QueryName),
@@ -114,92 +167,119 @@ named_query(WorkerRef, QueryName, Params, TimeOut) ->
 
 %% odbc API
 
+-spec commit(Worker :: pid(), CommitMode :: commit_mode()) -> ok | {error, commit_reason()}.
 commit(WorkerRef, CommitMode) ->
   commit(WorkerRef, CommitMode, ?TIMEOUT).
 
+-spec commit(Worker :: pid(), CommitMode :: commit_mode(), TimeOut :: timeout()) -> ok | {error, commit_reason()}.
 commit(WorkerRef, CommitMode, TimeOut) ->
   gen_server:call(WorkerRef, {commit, CommitMode, TimeOut}).
 
+-spec connect(Pool :: atom()) -> {ok, pid()}.
 connect(Pool) ->
   connect(Pool, true).
 
+-spec connect(Pool :: atom(), Block :: boolean()) -> {ok, pid()} | full.
 connect(Pool, Block) ->
   connect(Pool, Block, ?TIMEOUT).
 
+-spec connect(Pool :: atom(), Block :: boolean(), TimeOut :: timeout()) -> {ok, pid()} | full.
 connect(Pool, Block, TimeOut) ->
   case poolboy:checkout(Pool, Block, TimeOut) of
     full ->
-      {error, full};
+      full;
     WorkerRef when is_pid(WorkerRef) ->
       {ok, WorkerRef}
   end.
 
+-spec disconnect(Pool :: atom(), Worker :: pid()) -> ok.
 disconnect(Pool, Worker) ->
   poolboy:checkin(Pool, Worker).
 
+-spec describe_table(Worker :: pid(), Table :: string()) -> {ok, [{col_name(), odbc_data_type()}]} | {error, common_reason()}.
 describe_table(WorkerRef, Table) ->
   describe_table(WorkerRef, Table, ?TIMEOUT).
 
+-spec describe_table(Worker :: pid(), Table :: string(), TimeOut :: timeout()) -> {ok, [{col_name(), odbc_data_type()}]} | {error, common_reason()}.
 describe_table(WorkerRef, Table, TimeOut) ->
   gen_server:call(WorkerRef, {describe_table, Table, TimeOut}).
 
+-spec first(Worker :: pid()) -> {selected, col_names(), rows()} | {error, scroll_reason()}.
 first(WorkerRef) ->
   first(WorkerRef, ?TIMEOUT).
 
+-spec first(Worker :: pid(), TimeOut :: timeout()) -> {selected, col_names(), rows()} | {error, scroll_reason()}.
 first(WorkerRef, TimeOut) ->
   gen_server:call(WorkerRef, TimeOut).
 
+-spec last(Worker :: pid()) -> {selected, col_names(), rows()} | {error, scroll_reason()}.
 last(WorkerRef) ->
   last(WorkerRef, ?TIMEOUT).
 
+-spec last(Worker :: pid(), TimeOut :: timeout()) -> {selected, col_names(), rows()} | {error, scroll_reason()}.
 last(WorkerRef, TimeOut) ->
   gen_server:call(WorkerRef, {last, TimeOut}).
 
+-spec next(Worker :: pid()) -> {selected, col_names(), rows()} | {error, result_reason()}.
 next(WorkerRef) ->
   next(WorkerRef, ?TIMEOUT).
 
+-spec next(Worker :: pid(), TimeOut :: timeout()) -> {selected, col_names(), rows()} | {error, result_reason()}.
 next(WorkerRef, TimeOut) ->
   gen_server:call(WorkerRef, {next, TimeOut}).
 
+-spec param_query(Worker :: pid(), SQLQuery :: string(), Params :: params()) -> result_tuple() | {error, common_reason()}.
 param_query(WorkerRef, SqlQuery, Params) ->
   param_query(WorkerRef, SqlQuery, Params, ?TIMEOUT).
 
+-spec param_query(Worker :: pid(), SQLQuery :: string(), Params :: params(), TimeOut :: timeout()) -> result_tuple() | {error, common_reason()}.
 param_query(WorkerRef, SqlQuery, Params, TimeOut) ->
   gen_server:call(WorkerRef, {param_query, SqlQuery, Params, TimeOut}).
 
+-spec prev(Worker :: pid()) -> {selected, ColNames :: [string()], Rows :: [any()]} | {error, scroll_reason()}.
 prev(WorkerRef) ->
   prev(WorkerRef, ?TIMEOUT).
 
+-spec prev(Worker :: pid(), TimeOut :: timeout()) -> {selected, ColNames :: [string()], Rows :: [any()]} | {error, scroll_reason()}.
 prev(WorkerRef, TimeOut) ->
   gen_server:call(WorkerRef, {prev, TimeOut}).
 
+-spec start() -> ok.
 start() ->
   start(temporary).
 
+-spec start(Type :: permanent | transient | temporary) -> ok.
 start(Type) ->
   application:load(?MODULE),
   {ok, Apps} = application:get_key(?MODULE, applications),
   [ensure_started(App) || App <- Apps],
   application:start(?MODULE, Type).
 
+-spec stop() -> ok.
 stop() ->
   application:stop(?MODULE).
 
+-spec sql_query(Worker :: pid(), SQLQuery :: string()) -> result_tuple() | [result_tuple()] | {error, common_reason()}.
 sql_query(WorkerRef, SqlQuery) ->
   sql_query(WorkerRef, SqlQuery, ?TIMEOUT).
 
+-spec sql_query(Worker :: pid(), SQLQuery :: string(), TimeOut :: timeout()) -> result_tuple() | [result_tuple()] | {error, common_reason()}.
 sql_query(WorkerRef, SqlQuery, TimeOut) ->
   gen_server:call(WorkerRef, {sql_query, SqlQuery, TimeOut}).
 
+-spec select_count(Worker :: pid(), SelectQuery :: string()) -> {ok, n_rows()} | {error, common_reason()}.
 select_count(WorkerRef, SelectQuery) ->
   select_count(WorkerRef, SelectQuery, ?TIMEOUT).
 
+-spec select_count(Worker :: pid(), SelectQuery :: string(), TimeOut :: timeout()) -> {ok, n_rows()} | {error, common_reason()}.
 select_count(WorkerRef, SelectQuery, TimeOut) ->
   gen_server:call(WorkerRef, {select_count, SelectQuery, TimeOut}).
 
+-spec select(Worker :: pid(), Position :: position(), N :: integer()) -> {selected, col_names(), rows()} | {error, scroll_reason()}.
 select(WorkerRef, Position, N) ->
   select(WorkerRef, Position, N, ?TIMEOUT).
 
+-spec select(Worker :: pid(), Position :: position(), N :: integer(), TimeOut :: timeout()) -> {selected, col_names(), rows()} | {error, scroll_reason()}.
 select(WorkerRef, Position, N, TimeOut) ->
   gen_server:call(WorkerRef, {select, Position, N, TimeOut}).
 

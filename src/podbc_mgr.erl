@@ -45,9 +45,11 @@
 start_link() ->
   gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
+-spec add_pool(Name :: atom(), SizeArgs :: size_args(), PoolArgs :: pool_args()) -> {ok, pid()} | {error, term()}.
 add_pool(Name, SizeArgs, PoolArgs) ->
   gen_server:call(?MODULE, {add_pool, Name, SizeArgs, PoolArgs}).
 
+-spec remove_pool(Name :: atom()) -> ok.
 remove_pool(Name) ->
   gen_server:call(?MODULE, {remove_pool, Name}).
 
