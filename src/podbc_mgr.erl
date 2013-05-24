@@ -25,6 +25,19 @@
 
 -behaviour(gen_server).
 
+-type odbc_option() :: {auto_commit, on | off} | {timeout, timeout()} | {binary_strings, on | off} | {tuple_row, on | off} |
+{scrollable_cursors, on | off} | {trace_driver, on | off}.
+
+-type odbc_options() :: [odbc_option()].
+
+-type pool_arg() :: {dsn, string()} | {options, odbc_options()}.
+
+-type pool_args() :: [pool_arg()].
+
+-type size_arg() :: {size, pos_integer()} | {max_overflow, pos_integer()}.
+
+-type size_args() :: [size_arg()].
+
 %% API
 
 -export([start_link/0]).
