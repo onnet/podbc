@@ -45,14 +45,14 @@ start_link(Args) ->
 
 %% gen_server callbacks
 
--record(state, {name, conn}).
+-record(state, {name, conn, dsn, options}).
 
 init(Args) ->
   Name = proplists:get_value(name, Args),
   Dsn = proplists:get_value(dsn, Args),
   Options = proplists:get_value(options, Args, []),
   {ok, ConnRef} = odbc:connect(Dsn, Options),
-  {ok, #state{name = Name, conn = ConnRef}}.
+  {ok, #state{name = Name, conn = ConnRef, dsn = Dsn, options = Options}}.
 
 handle_call({commit, CommitMode, TimeOut}, _From, #state{conn = ConnRef} = State) ->
   {reply, odbc:commit(ConnRef, CommitMode, TimeOut), State};
@@ -62,12 +62,26 @@ handle_call({first, TimeOut}, _From, #state{conn = ConnRef} = State) ->
   {reply, odbc:first(ConnRef, TimeOut), State};
 handle_call({last, TimeOut}, _From, #state{conn = ConnRef} = State) ->
   {reply, odbc:last(ConnRef, TimeOut), State};
-handle_call({param_query, SqlQuery, Params, TimeOut}, _From, #state{conn = ConnRef} = State) ->
-  {reply, odbc:param_query(ConnRef, SqlQuery, Params, TimeOut), State};
+handle_call({param_query, SqlQuery, Params, TimeOut}, _From, #state{conn = ConnRef, dsn = Dsn, options = Options} = State) ->
+  case odbc:param_query(ConnRef, SqlQuery, Params, TimeOut) of
+    {error, connection_closed} ->
+        ConnRef1 = reconnect(ConnRef, Dsn, Options),
+        Ret1 = odbc:param_query(ConnRef1, SqlQuery, Params, TimeOut),
+        {reply, Ret1, State#state{conn = ConnRef1}};
+    Ret -> {reply, Ret, State}
+  end;
+  %{reply, odbc:param_query(ConnRef, SqlQuery, Params, TimeOut), State};
 handle_call({prev, TimeOut}, _From, #state{conn = ConnRef} = State) ->
   {reply, odbc:prev(ConnRef, TimeOut), State};
-handle_call({sql_query, SqlQuery, TimeOut}, _From, #state{conn = ConnRef} = State) ->
-  {reply, odbc:sql_query(ConnRef, SqlQuery, TimeOut), State};
+handle_call({sql_query, SqlQuery, TimeOut}, _From, #state{conn = ConnRef, dsn = Dsn, options = Options} = State) ->
+  case odbc:sql_query(ConnRef, SqlQuery, TimeOut) of
+    {error, connection_closed} ->
+        ConnRef1 = reconnect(ConnRef, Dsn, Options),
+        Ret1 = odbc:sql_query(ConnRef1, SqlQuery, TimeOut),
+        {reply, Ret1, State#state{conn = ConnRef1}};
+    Ret -> {reply, Ret, State}
+  end;
+  %{reply, odbc:sql_query(ConnRef, SqlQuery, TimeOut), State};
 handle_call({select_count, SelectQuery, TimeOut}, _From, #state{conn = ConnRef} = State) ->
   {reply, odbc:sql_query(ConnRef, SelectQuery, TimeOut), State};
 handle_call({select, Position, N, TimeOut}, _From, #state{conn = ConnRef} = State) ->
@@ -88,3 +102,13 @@ terminate(_Reason, #state{conn = ConnRef}) ->
 
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
+
+reconnect(ConnRef, Dsn, Options) ->
+   try odbc:disconnect(ConnRef) of
+        _ -> ok
+   catch
+        {DE, DR} -> error_logger:error_msg("podbcworker disconnect error ~p ~p ~n", [DE, DR]), ok
+   end,
+   {ok, ConnRef1} = odbc:connect(Dsn, Options),
+   ConnRef1.
+  
