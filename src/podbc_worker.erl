@@ -64,7 +64,12 @@ handle_call({last, TimeOut}, _From, #state{conn = ConnRef} = State) ->
   {reply, odbc:last(ConnRef, TimeOut), State};
 handle_call({param_query, SqlQuery, Params, TimeOut}, _From, #state{conn = ConnRef, dsn = Dsn, options = Options} = State) ->
   case odbc:param_query(ConnRef, SqlQuery, Params, TimeOut) of
-    {error, connection_closed} ->
+    ErrRet when
+    %{timeout, "Port-program busy when trying to disconnect,  will be killed"}
+    ErrRet =:= {error, "[FreeTDS][SQL Server]Write to the server failed SQLSTATE IS: 08S01"};
+    ErrRet =:= {error, "[FreeTDS][SQL Server]Communication link failure SQLSTATE IS: 08S01"};
+    ErrRet =:= {error, connection_closed} ->
+        error_logger:error_msg("podbcworker odbc error -> reconnect and retry ~p ~n", [ErrRet]),
         ConnRef1 = reconnect(ConnRef, Dsn, Options),
         Ret1 = odbc:param_query(ConnRef1, SqlQuery, Params, TimeOut),
         {reply, Ret1, State#state{conn = ConnRef1}};
@@ -75,7 +80,12 @@ handle_call({prev, TimeOut}, _From, #state{conn = ConnRef} = State) ->
   {reply, odbc:prev(ConnRef, TimeOut), State};
 handle_call({sql_query, SqlQuery, TimeOut}, _From, #state{conn = ConnRef, dsn = Dsn, options = Options} = State) ->
   case odbc:sql_query(ConnRef, SqlQuery, TimeOut) of
-    {error, connection_closed} ->
+    ErrRet when
+    %{timeout, "Port-program busy when trying to disconnect,  will be killed"}
+    ErrRet =:= {error, "[FreeTDS][SQL Server]Write to the server failed SQLSTATE IS: 08S01"};
+    ErrRet =:= {error, "[FreeTDS][SQL Server]Communication link failure SQLSTATE IS: 08S01"};
+    ErrRet =:= {error, connection_closed} ->
+        error_logger:error_msg("podbcworker odbc error -> reconnect and retry ~p ~n", [ErrRet]),
         ConnRef1 = reconnect(ConnRef, Dsn, Options),
         Ret1 = odbc:sql_query(ConnRef1, SqlQuery, TimeOut),
         {reply, Ret1, State#state{conn = ConnRef1}};
