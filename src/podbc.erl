@@ -177,7 +177,7 @@ commit(WorkerRef, CommitMode) ->
 
 -spec commit(WorkerRef :: worker_ref(), CommitMode :: commit_mode(), TimeOut :: timeout()) -> ok | {error, commit_reason()}.
 commit(WorkerRef, CommitMode, TimeOut) ->
-  gen_server:call(worker_pid(WorkerRef), {commit, CommitMode, TimeOut}).
+  gen_server:call(worker_pid(WorkerRef), {commit, CommitMode, TimeOut}, Timeout).
 
 -spec connect(Pool :: atom()) -> {ok, pid()}.
 connect(Pool) ->
@@ -211,7 +211,7 @@ describe_table(WorkerRef, Table) ->
 
 -spec describe_table(WorkerRef :: worker_ref(), Table :: string(), TimeOut :: timeout()) -> {ok, [{col_name(), odbc_data_type()}]} | {error, common_reason()}.
 describe_table(WorkerRef, Table, TimeOut) ->
-  gen_server:call(worker_pid(WorkerRef), {describe_table, Table, TimeOut}).
+  gen_server:call(worker_pid(WorkerRef), {describe_table, Table, TimeOut}, Timeout).
 
 -spec first(WorkerRef :: worker_ref()) -> {selected, col_names(), rows()} | {error, scroll_reason()}.
 first(WorkerRef) ->
@@ -227,7 +227,7 @@ last(WorkerRef) ->
 
 -spec last(WorkerRef :: worker_ref(), TimeOut :: timeout()) -> {selected, col_names(), rows()} | {error, scroll_reason()}.
 last(WorkerRef, TimeOut) ->
-  gen_server:call(worker_pid(WorkerRef), {last, TimeOut}).
+  gen_server:call(worker_pid(WorkerRef), {last, TimeOut}, Timeout).
 
 -spec next(WorkerRef :: worker_ref()) -> {selected, col_names(), rows()} | {error, result_reason()}.
 next(WorkerRef) ->
@@ -235,7 +235,7 @@ next(WorkerRef) ->
 
 -spec next(WorkerRef :: worker_ref(), TimeOut :: timeout()) -> {selected, col_names(), rows()} | {error, result_reason()}.
 next(WorkerRef, TimeOut) ->
-  gen_server:call(worker_pid(WorkerRef), {next, TimeOut}).
+  gen_server:call(worker_pid(WorkerRef), {next, TimeOut}, Timeout).
 
 -spec param_query(WorkerRef :: worker_ref(), SQLQuery :: string(), Params :: params()) -> result_tuple() | {error, common_reason()}.
 param_query(WorkerRef, SqlQuery, Params) ->
@@ -243,7 +243,7 @@ param_query(WorkerRef, SqlQuery, Params) ->
 
 -spec param_query(WorkerRef :: worker_ref(), SQLQuery :: string(), Params :: params(), TimeOut :: timeout()) -> result_tuple() | {error, common_reason()}.
 param_query(WorkerRef, SqlQuery, Params, TimeOut) ->
-  gen_server:call(worker_pid(WorkerRef), {param_query, SqlQuery, Params, TimeOut}).
+  gen_server:call(worker_pid(WorkerRef), {param_query, SqlQuery, Params, TimeOut}, Timeout).
 
 -spec prev(WorkerRef :: worker_ref()) -> {selected, ColNames :: [string()], Rows :: [any()]} | {error, scroll_reason()}.
 prev(WorkerRef) ->
@@ -251,7 +251,7 @@ prev(WorkerRef) ->
 
 -spec prev(WorkerRef :: worker_ref(), TimeOut :: timeout()) -> {selected, ColNames :: [string()], Rows :: [any()]} | {error, scroll_reason()}.
 prev(WorkerRef, TimeOut) ->
-  gen_server:call(worker_pid(WorkerRef), {prev, TimeOut}).
+  gen_server:call(worker_pid(WorkerRef), {prev, TimeOut}, Timeout).
 
 -spec start() -> ok.
 start() ->
@@ -274,7 +274,7 @@ sql_query(WorkerRef, SqlQuery) ->
 
 -spec sql_query(WorkerRef :: worker_ref(), SQLQuery :: string(), TimeOut :: timeout()) -> result_tuple() | [result_tuple()] | {error, common_reason()}.
 sql_query(WorkerRef, SqlQuery, TimeOut) ->
-  gen_server:call(worker_pid(WorkerRef), {sql_query, SqlQuery, TimeOut}).
+  gen_server:call(worker_pid(WorkerRef), {sql_query, SqlQuery, TimeOut}, Timeout).
 
 -spec select_count(WorkerRef :: worker_ref(), SelectQuery :: string()) -> {ok, n_rows()} | {error, common_reason()}.
 select_count(WorkerRef, SelectQuery) ->
@@ -282,7 +282,7 @@ select_count(WorkerRef, SelectQuery) ->
 
 -spec select_count(WorkerRef :: worker_ref(), SelectQuery :: string(), TimeOut :: timeout()) -> {ok, n_rows()} | {error, common_reason()}.
 select_count(WorkerRef, SelectQuery, TimeOut) ->
-  gen_server:call(worker_pid(WorkerRef), {select_count, SelectQuery, TimeOut}).
+  gen_server:call(worker_pid(WorkerRef), {select_count, SelectQuery, TimeOut}, Timeout).
 
 -spec select(WorkerRef :: worker_ref(), Position :: position(), N :: integer()) -> {selected, col_names(), rows()} | {error, scroll_reason()}.
 select(WorkerRef, Position, N) ->
@@ -290,7 +290,7 @@ select(WorkerRef, Position, N) ->
 
 -spec select(WorkerRef :: worker_ref(), Position :: position(), N :: integer(), TimeOut :: timeout()) -> {selected, col_names(), rows()} | {error, scroll_reason()}.
 select(WorkerRef, Position, N, TimeOut) ->
-  gen_server:call(worker_pid(WorkerRef), {select, Position, N, TimeOut}).
+  gen_server:call(worker_pid(WorkerRef), {select, Position, N, TimeOut}, Timeout).
 
 %% private
 
