@@ -23,7 +23,7 @@
 -module(podbc).
 -author('Matthias Endler <matthias.endler@pantech.at>').
 
--define(TIMEOUT, 25000).
+-define(TIMEOUT, 60000).
 
 -type col_name() :: string().
 
